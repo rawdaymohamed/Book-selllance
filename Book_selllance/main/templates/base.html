@@ -38,11 +38,17 @@
   {% for message in messages %}
   <div class="alert alert-{{ message.tags }}">{{ message }}</div>
   {% endfor %}
-  {% block content %}
-
-  {% endblock %}
+  {% if request.basket %}
+  <div>
+    {{request.basket.count}}
+    items in basket
+  </div>
+  {% endif %}
+  {% block content %}{% endblock %}
   <script src="{% static 'js/popper.js' %}"></script>
   <script src="{% static 'js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+  {% block js %}{% endblock %}
 </body>
 
 </html>

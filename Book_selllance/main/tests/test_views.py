@@ -6,6 +6,7 @@ from main import models
 from unittest.mock import patch
 from django.contrib import auth
 
+
 class TestPage(TestCase):
     def test_home_page_works(self):
         response = self.client.get(reverse('home'))
@@ -47,8 +48,6 @@ class TestPage(TestCase):
         self.assertEqual(
             list(response.context['object_list']), list(product_list))
 
-
-            
     def test_products_page_filters_by_tags_and_active(self):
         cb = models.Product.objects.create(
             name='The cathedral and the bazaar',
@@ -69,8 +68,8 @@ class TestPage(TestCase):
         product_list = models.Product.objects.active()\
             .filter(tags__slug='opensource').order_by('name')
         self.assertEqual(list(response.context['object_list']),
-        list(product_list))
-        
+                         list(product_list))
+
     def test_user_signup_page_loads_correctly(self):
         response = self.client.get(reverse('signup'))
         self.assertEqual(response.status_code, 200)
@@ -87,6 +86,91 @@ class TestPage(TestCase):
         with patch.object(UserCreationForm, 'send_mail') as mock_send:
             response = self.client.post(reverse('signup'), post_data)
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(models.User.objects.filter(email='user@domain.com').exists())
+        self.assertTrue(models.User.objects.filter(
+            email='user@domain.com').exists())
         self.assertTrue(auth.get_user(self.client).is_authenticated)
         mock_send.assert_called_once()
+
+    def test_address_list_page_returns_only_owned(self):
+        user1 = models.User.objects.create_user('user1', 'abcabcabc')
+        user2 = models.User.objects.create_user('user2', 'abcabcabc')
+        models.Address.objects.create(
+            user=user1, name='John Smith', address1="flat2", address2='Journal street',
+            city='New york', country='us')
+        models.Address.objects.create(
+            user=user1, name='Emma Henry', address1="flat1", address2='Boston street',
+            city='Boston', country='us')
+        self.client.force_login(user2)
+        address_list = models.Address.objects.filter(user=user2)
+        response = self.client.get(reverse('address_list'))
+        self.assertEqual(list(response.context['object_list']), list(address_list))
+
+    def test_address_create_stores_user(self):
+        user1 = models.User.objects.create_user(
+            'user1', 'abcabcabc'
+        )
+        post_data = {
+            'name': 'John Henry',
+            'address1': '1 av st',
+            'address2': '',
+            'zip_code': 'MA12GS',
+            'city': 'Manchester',
+            'country': 'uk',
+        }
+        self.client.force_login(user1)
+        self.client.post(reverse('address_create'), post_data)
+        self.assertTrue(models.Address.objects.filter(user=user1).exists())
+
+
+    def test_add_to_basket_loggedin_works(self):
+        user1 = models.User.objects.create_user(
+            'user1@a.com', 'abcabacabc'
+        )
+        cb = models.Product.objects.create(
+            name='The wife between us',
+            slug='the-wife-between-us',
+            price=Decimal('20.00')
+        )
+        w = models.Product.objects.create(
+            name='Linux guide',
+            slug='linux-guide',
+            price=Decimal('12.00'),
+        )
+        self.client.force_login(user1)
+        response = self.client.get(reverse('add_to_basket'), {'product_id': cb.id})
+        response = self.client.get(reverse('add_to_basket'), {'product_id': cb.id})
+        self.assertTrue(models.Basket.objects.filter(user=user1).exists())
+        self.assertEquals(models.BasketLine.objects.filter(basket__user=user1).count(), 1)
+        response = self.client.get(reverse('add_to_basket'), {'product_id': w.id})
+        self.assertEquals(models.BasketLine.objects.filter(basket__user=user1).count(), 2)
+    
+    def test_add_to_basket_login_merge_works(self):
+        user1 = models.User.objects.create_user(
+            'user1@a.com', 'abcabcabc'
+        )
+        cb = models.Product.objects.create(
+            name='The wife between us',
+            slug='the-wife-between-us',
+            price=Decimal('20.00')
+        )
+        w = models.Product.objects.create(
+            name='linux guide',
+            slug='linux-guide',
+            price=Decimal('12.00'),
+        )
+        basket = models.Basket.objects.create(user=user1)
+        models.BasketLine.objects.create(
+            basket=basket, product=cb, quantity=2
+        )
+        response = self.client.get(
+            reverse('add_to_basket'), {'product_id': w.id}
+        )
+        response = self.client.post(
+            reverse('login'), {'email': 'user1@a.com', 'password': 'abcabcabc'},
+        )
+        self.assertTrue(
+            auth.get_user(self.client).is_authenticated
+        )
+        self.assertTrue(models.Basket.objects.filter(user=user1).exists())
+        basket = models.Basket.objects.get(user=user1)
+        self.assertEquals(basket.count(), 3)

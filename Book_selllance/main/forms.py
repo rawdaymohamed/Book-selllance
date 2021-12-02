@@ -5,10 +5,18 @@ import logging
 from django.contrib.auth.forms import (
     UserCreationForm as DjangoUserCreationForm)
 from django.contrib.auth.forms import UsernameField
-from . import models
+from . import models, widgets
 from django.contrib.auth import authenticate
+from django.forms import inlineformset_factory
 logger = logging.getLogger(__name__)
 
+BasketLineFormSet = inlineformset_factory(
+    models.Basket,
+    models.BasketLine,
+    fields=('quantity', ),
+    extra=0,
+    widgets={'quantity': widgets.PlusMinusNumberInput()},
+)
 
 class ContactForm(forms.Form):
     name = forms.CharField(label='Your name', max_length=100)
