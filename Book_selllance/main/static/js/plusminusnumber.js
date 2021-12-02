@@ -6,7 +6,7 @@ $(function(){
         var input = $("input[name='" + fieldName + "']");
         var currentVal = parseInt(input.val());
         if (type == 'minus'){
-            if (current > input.attr('min')){
+            if (currentVal > input.attr('min')){
                 input.val(currentVal -1 ).change();
             }
             if (parseInt(input.val()) == input.attr('min')){

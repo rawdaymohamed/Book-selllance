@@ -1,11 +1,9 @@
 from django.conf.urls import url
 from django.urls import path
-from . import views
-from . import models
 from django.views.generic import TemplateView
 from django.views.generic.detail import DetailView
 from django.contrib.auth import views as auth_views
-from main import forms
+from . import forms, views, models
 
 urlpatterns = [
     path('contact-us/', views.ContactUsView.as_view(), name="contact_us"),
@@ -24,6 +22,4 @@ urlpatterns = [
     path('add_to_basket/', views.add_to_basket, name='add_to_basket'),
     path('basket/', views.manage_basket, name='basket'),
     path('', TemplateView.as_view(template_name='home.html'), name="home"),
-
-
 ]
