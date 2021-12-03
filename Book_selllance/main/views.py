@@ -16,8 +16,127 @@ from django.urls import reverse
 
 logger = logging.getLogger(__name__)
 
+'''
+    Contact us 
+    Class Based View
+'''
 
-# function-based view
+
+class ContactUsView(FormView):
+    template_name = 'contact_form.html'
+    form_class = forms.ContactForm
+    success_url = '/'
+
+    # called when the form is valid
+    def form_valid(self, form):
+        form.send_mail()
+        return super().form_valid(form)
+
+
+# Function based View
+"""
+    def contact_us(request):
+        if request.methos == 'POST':
+            form = = forms.ContactForm(request.POST)
+            if form.is_valid():
+                form.send_mail()
+                return HttpResponseRedirect('/')
+            else:
+                form = forms.ContactForm()
+        return render(request, 'contact_form.html', {'form': form})
+"""
+
+# product list
+# url --> products/<slug:tag>/
+
+
+class ProductListView(ListView):
+    template_name = 'main/product_list.html'
+    paginate_by = 4
+
+    def get_queryset(self):
+        tag = self.kwargs['tag']
+        self.tag = None
+        if tag != 'all':
+            self.tag = get_object_or_404(
+                models.ProductTag, slug=tag
+            )
+        if self.tag:
+            products = models.Product.objects.active().filter(
+                tags=self.tag
+            )
+        else:
+            # ActiveManager
+            products = models.Product.objects.active()
+        return products.order_by('name')
+
+''' 
+url -> signup/
+'''
+class SignupView(FormView):
+    template_name = 'main/signup.html'
+    form_class = forms.UserCreationForm
+    
+    # todo search
+    def get_success_url(self):
+        redirect_to = self.request.GET.get('next', '/')
+        return redirect_to
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        form.save()
+        email = form.cleaned_data.get('email')
+        raw_password = form.cleaned_data.get('password1')
+        logger.info('New signup for email=%s through SignupView', email)
+        user = authenticate(email=email, password=raw_password)
+        login(self.request, user)
+        form.send_mail()
+        messages.info(self.request, 'You signed up successfully.')
+        return response
+
+# url --> address/
+class AddressListView(LoginRequiredMixin, ListView):
+    model = models.Address
+
+    def get_queryset(self):
+        return self.model.objects.filter(user=self.request.user)
+
+# url --> address/create
+class AddressCreateView(LoginRequiredMixin, CreateView):
+    model = models.Address
+    fields = ['name', 'address1', 'address2', 'zip_code', 'city', 'country']
+    success_url = reverse_lazy('address_list')
+
+    # called when the form is valid
+    # save the address after assigning authorized author
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.user = self.request.user
+        obj.save()
+        return super().form_valid(form)
+
+# url --> address/<int:pk>/
+class AddressUpdateView(LoginRequiredMixin, UpdateView):
+    model = models.Address
+    fields = ['name', 'address1', 'address2', 'zip_code', 'city', 'country']
+    success_url = reverse_lazy('address_list')
+
+    def get_queryset(self):
+        return self.model.objects.filter(user=self.request.user)
+
+
+# url --> address/<int:pk>/delete
+class AddressDeleteView(LoginRequiredMixin, DeleteView):
+    model = models.Address
+    template_name = 'main/address_delete.html'
+    success_url = reverse_lazy('address_list')
+
+    def get_queryset(self):
+        return self.model.objects.filter(user=self.request.user)
+
+
+# url --> add_to_basket/
+# todo ???????
 def add_to_basket(request):
     product = get_object_or_404(
         models.Product, pk=request.GET.get('product_id')
@@ -38,9 +157,12 @@ def add_to_basket(request):
         basketline.save()
     return HttpResponseRedirect(reverse('product', args=(product.slug,)))
 
+
+
 # function-based view
 # it would be difficult with CBV
 
+# url --> basket/
 def manage_basket(request):
     if not request.basket:
         return render(request, 'basket.html', {'formset': None})
@@ -57,105 +179,24 @@ def manage_basket(request):
         return render(request, 'basket.html', {'formset': None})
     return render(request, 'basket.html', {'formset': formset})
 
-class AddressListView(LoginRequiredMixin, ListView):
-    model = models.Address
+# url --> order/address_select/
+class AddressSelectionView(LoginRequiredMixin, FormView):
+    template_name = 'address_select.html'
+    form_class = forms.AddressSelectionForm
+    success_url = reverse_lazy('checkout_done')
 
-    def get_queryset(self):
-        return self.model.objects.filter(user=self.request.user)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
-
-class AddressCreateView(LoginRequiredMixin, CreateView):
-    model = models.Address
-    fields = ['name', 'address1', 'address2', 'zip_code', 'city', 'country']
-    success_url = reverse_lazy('address_list')
-    
-    # called when the form is valid
-    # save the address after assigning authorized author
     def form_valid(self, form):
-        obj = form.save(commit=False)
-        obj.user = self.request.user
-        obj.save()
+        # print(self.request.session['basket_id'])
+        del self.request.session['basket_id']
+        basket = self.request.basket
+        basket.create_order(
+            form.cleaned_data['billing_address'],
+            form.cleaned_data['shipping_address']
+        )
         return super().form_valid(form)
 
-
-class AddressUpdateView(LoginRequiredMixin, UpdateView):
-    model = models.Address
-    fields = ['name', 'address1', 'address2', 'zip_code', 'city', 'country']
-    success_url = reverse_lazy('address_list')
-
-    def get_queryset(self):
-        return self.model.objects.filter(user=self.request.user)
-
-
-class AddressDeleteView(LoginRequiredMixin, DeleteView):
-    model = models.Address
-    success_url = reverse_lazy('address_list')
-
-    def get_queryset(self):
-        return self.model.objects.filter(user=self.request.user)
-
-
-class SignupView(FormView):
-    template_name = 'main/signup.html'
-    form_class = forms.UserCreationForm
-
-    def get_success_url(self):
-        redirect_to = self.request.GET.get('next', '/')
-        return redirect_to
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        form.save()
-        email = form.cleaned_data.get('email')
-        raw_password = form.cleaned_data.get('password1')
-        logger.info('New signup for email=%s through SignupView', email)
-        user = authenticate(email=email, password=raw_password)
-        login(self.request, user)
-        form.send_mail()
-        messages.info(self.request, 'You signed up successfully.')
-        return response
-
-
-class ProductListView(ListView):
-    template_name = 'main/product_list.html'
-    paginate_by = 4
-
-    def get_queryset(self):
-        tag = self.kwargs['tag']
-        self.tag = None
-        if tag != 'all':
-            self.tag = get_object_or_404(
-                models.ProductTag, slug=tag
-            )
-        if self.tag:
-            products = models.Product.objects.active().filter(
-                tags=self.tag
-            )
-        else:
-            products = models.Product.objects.active()
-        return products.order_by('name')
-
-
-class ContactUsView(FormView):
-    template_name = 'contact_form.html'
-    form_class = forms.ContactForm
-    success_url = '/'
-    
-    # called when the form is valid
-    def form_valid(self, form):
-        form.send_mail()
-        return super().form_valid(form)
-
-
-# Function based View
-"""
-    def contact_us(request):
-        if request.methos == 'POST':
-            form = = forms.ContactForm(request.POST)
-            if form.is_valid():
-                form.send_mail()
-                return HttpResponseRedirect('/')
-            else:
-                form = forms.ContactForm()
-        return render(request, 'contact_form.html', {'form': form})
-"""

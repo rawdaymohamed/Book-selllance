@@ -1,7 +1,7 @@
 from django.forms.widgets import Widget
 
 class PlusMinusNumberInput(Widget):
-    template_name = 'widets/plusminusnumber.html'
+    template_name = 'widgets/plusminusnumber.html'
 
     class Media:
         css = {

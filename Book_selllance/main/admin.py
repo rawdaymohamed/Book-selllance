@@ -4,6 +4,58 @@ from django.utils.html import format_html
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 
+class BasketInline(admin.TabularInline):
+    model = models.BasketLine
+    raw_id_fields = ('product',)
+
+
+@admin.register(models.Basket)
+class BasketAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'status', 'count')
+    list_editable = ('status',)
+    list_filter = ('status',)
+    inlines = (BasketInline,)
+
+
+class OrderLineInline(admin.TabularInline):
+    model = models.OrderLine
+    raw_id_fields = ('product',)
+
+
+@admin.register(models.Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'status')
+    list_editable = ('status',)
+    list_filter = ('status', 'shipping_country', 'date_added')
+    inlines = (OrderLineInline,)
+    fieldsets = (
+        (None, {"fields": ('user', 'status'), }),
+        ('Billing info', {
+            'fields': (
+                'billing_name',
+                'billing_address1',
+                'billing_address2',
+                'billing_zip_code',
+                'billing_city',
+                'billing_country',
+            )
+        }),
+        (
+            'shipping info', {
+                'fields': (
+                    'shipping_name',
+                    'shipping_address1',
+                    'shipping_address2',
+                    'shipping_zip_code',
+                    'shipping_city',
+                    'shipping_country',
+                )
+
+            }
+        )
+    )
+
+
 class ProductTagAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     list_filter = ('active',)

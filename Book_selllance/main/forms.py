@@ -10,6 +10,37 @@ from django.contrib.auth import authenticate
 from django.forms import inlineformset_factory
 logger = logging.getLogger(__name__)
 
+
+class UserCreationForm(DjangoUserCreationForm):
+    class Meta:
+        model = models.User
+        fields = ('email',)
+        field_classes = {'email': UsernameField}
+
+    def send_mail(self):
+        logger.info('Sending signup email for email=%s',
+                    self.cleaned_data['email'],)
+        message = 'Welcome{}'.format(self.cleaned_data['email'])
+        send_mail('Welcome to BookSelllance', message, 'site@booktime.domain',
+                  [self.cleaned_data['email']], fail_silently=True)
+
+class AddressSelectionForm(forms.Form):
+    billing_address = forms.ModelChoiceField(
+        queryset=None
+    )
+    shipping_address = forms.ModelChoiceField(
+        queryset=None
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        queryset = models.Address.objects.filter(user=user)
+        self.fields['billing_address'].queryset = queryset
+        self.fields['shipping_address'].queryset = queryset
+
+
+
+
 BasketLineFormSet = inlineformset_factory(
     models.Basket,
     models.BasketLine,
@@ -29,19 +60,6 @@ class ContactForm(forms.Form):
         send_mail("Site message", message, "site@booktime.domain",
                   ["customerservice@booktime.domain"], fail_silently=False,)
 
-
-class UserCreationForm(DjangoUserCreationForm):
-    class Meta:
-        model = models.User
-        fields = ('email',)
-        field_classes = {'email': UsernameField}
-
-    def send_mail(self):
-        logger.info('Sending signup email for email=%s',
-                    self.cleaned_data['email'],)
-        message = 'Welcome{}'.format(self.cleaned_data['email'])
-        send_mail('Welcome to BookSelllance', message, 'site@booktime.domain',
-                  [self.cleaned_data['email']], fail_silently=True)
 
 
 class AuthenticationForm(forms.Form):

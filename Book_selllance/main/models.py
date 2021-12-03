@@ -65,6 +65,7 @@ class UserManager(BaseUserManager):
     def _create_user(self, email, password, **extra_fields):
         if not email:
             raise ValueError('The given email must bt set')
+        # normalize_email(email) : lowercase domain part
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -92,8 +93,8 @@ class User(AbstractUser):
     username = None
     email = models.EmailField('email address', unique=True)
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
-
+    # email & password are required by default
+    REQUIRED_FIELDS = [] 
     objects = UserManager()
 
 
