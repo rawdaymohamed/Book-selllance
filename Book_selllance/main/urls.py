@@ -1,5 +1,6 @@
 from django.conf.urls import url
 from django.urls import path
+from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import TemplateView
 from django.views.generic.detail import DetailView
 from django.contrib.auth import views as auth_views
@@ -15,6 +16,7 @@ urlpatterns = [
     path('signup/', views.SignupView.as_view(), name='signup'),
     path('login/', auth_views.LoginView.as_view(template_name='main/login.html',
          form_class=forms.AuthenticationForm), name='login'),
+    path("logout/", LogoutView.as_view(), name="user_logout"),
     path('address/', views.AddressListView.as_view(), name="address_list"),
     path('address/create', views.AddressCreateView.as_view(), name="address_create"),
     path('address/<int:pk>/', views.AddressUpdateView.as_view(),
@@ -27,5 +29,7 @@ urlpatterns = [
          name="checkout_done"),
     path('order/address_select/',
          views.AddressSelectionView.as_view(), name='address_select'),
+    path('order-dashboard/',
+    views.OrderView.as_view(), name='order_dashboard',),
     path('', TemplateView.as_view(template_name='home.html'), name="home"),
 ]

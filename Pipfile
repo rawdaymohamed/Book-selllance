@@ -10,6 +10,15 @@ pillow = "*"
 sorl-thumbnail = "*"
 tox = "*"
 django-resized = "*"
+django-webpack-loader = "*"
+django-extensions = "*"
+pydotplus = "*"
+ipython = "*"
+werkzeug = "*"
+factory-boy = "*"
+django-debug-toolbar = "*"
+django-tables2 = "*"
+django-filter = "*"
 
 [dev-packages]
 

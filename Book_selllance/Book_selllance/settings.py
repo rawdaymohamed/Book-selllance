@@ -81,10 +81,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'sorl.thumbnail',
+    'webpack_loader',
+    'django_extensions',
+    'debug_toolbar',
+    'django_tables2',
+    'widget_tweaks',
     # apps
     'main.apps.MainConfig',
 ]
-
+DJANGO_TABLES2_TEMPLATE = 'django_tables2/bootstrap.html'
 MIDDLEWARE = [
     # The order matters
     'django.middleware.security.SecurityMiddleware',
@@ -95,14 +100,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'main.middlewares.basket_middleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
-
+INTERNAL_IPS = ['127.0.0.1']
 ROOT_URLCONF = 'Book_selllance.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
+
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -172,7 +179,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'main/static'),
 ]
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
