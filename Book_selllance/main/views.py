@@ -24,42 +24,12 @@ import django_filters
 from django_filters.views import FilterView
 
 
-
+# Instantiate Logger
+"""
+    Note: Should not be instantiated directly
+    Logger is much more elegant and flexible than print().
+"""
 logger = logging.getLogger(__name__)
-
-
-class DateInput(django_forms.DateInput):
-    input_type = 'date'
-
-class OrderFilter(django_filters.FilterSet):
-    class Meta:
-        model = models.Order
-        fields = {
-            'user__email': ['icontains'],
-            'status': ['exact'],
-            'date_updated': ['gt', 'lt'],
-            'date_added': ['gt', 'lt'],
-        }
-        filter_overrides = {
-            django_models.DateTimeField: {
-                'filter_class': django_filters.DateFilter,
-                'extra': lambda f:{
-                    'widget': DateInput
-                }
-            }
-        }
-
-        
-class OrderView(UserPassesTestMixin, FilterView):
-    filterset_class = OrderFilter
-    login_url = reverse_lazy('login')
-    def test_func(self):
-        return self.request.user.is_staff is True
-
-'''
-    Contact us 
-    Class Based View
-'''
 
 
 class ContactUsView(FormView):
@@ -92,10 +62,13 @@ class ContactUsView(FormView):
 
 class ProductListView(ListView):
     template_name = 'main/product_list.html'
+    # This limits the number of objects per page
     paginate_by = 4
-
+    # Returns a list of items to be rendered
     def get_queryset(self):
+        # The tag in the URL
         tag = self.kwargs['tag']
+        # belongs to the class
         self.tag = None
         if tag != 'all':
             self.tag = get_object_or_404(
@@ -110,13 +83,56 @@ class ProductListView(ListView):
             products = models.Product.objects.active()
         return products.order_by('name')
 
+
+###################
+class DateInput(django_forms.DateInput):
+    input_type = 'date'
+
+
+class OrderFilter(django_filters.FilterSet):
+    class Meta:
+        model = models.Order
+        fields = {
+            'user__email': ['icontains'],
+            'status': ['exact'],
+            'date_updated': ['gt', 'lt'],
+            'date_added': ['gt', 'lt'],
+        }
+        filter_overrides = {
+            django_models.DateTimeField: {
+                'filter_class': django_filters.DateFilter,
+                'extra': lambda f: {
+                    'widget': DateInput
+                }
+            }
+        }
+
+#######################
+
+
+class OrderView(UserPassesTestMixin, FilterView):
+    filterset_class = OrderFilter
+    login_url = reverse_lazy('login')
+
+    def test_func(self):
+        return self.request.user.is_staff is True
+
+
+'''
+    Contact us 
+    Class Based View
+'''
+
+
 ''' 
 url -> signup/
 '''
+
+
 class SignupView(FormView):
     template_name = 'main/signup.html'
     form_class = forms.UserCreationForm
-    
+
     # todo search
     def get_success_url(self):
         redirect_to = self.request.GET.get('next', '/')
@@ -135,6 +151,8 @@ class SignupView(FormView):
         return response
 
 # url --> address/
+
+
 class AddressListView(LoginRequiredMixin, ListView):
     model = models.Address
 
@@ -142,6 +160,8 @@ class AddressListView(LoginRequiredMixin, ListView):
         return self.model.objects.filter(user=self.request.user)
 
 # url --> address/create
+
+
 class AddressCreateView(LoginRequiredMixin, CreateView):
     model = models.Address
     fields = ['name', 'address1', 'address2', 'zip_code', 'city', 'country']
@@ -156,6 +176,8 @@ class AddressCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 # url --> address/<int:pk>/
+
+
 class AddressUpdateView(LoginRequiredMixin, UpdateView):
     model = models.Address
     fields = ['name', 'address1', 'address2', 'zip_code', 'city', 'country']
@@ -176,7 +198,7 @@ class AddressDeleteView(LoginRequiredMixin, DeleteView):
 
 
 # url --> add_to_basket/
-# todo ???????
+
 def add_to_basket(request):
     product = get_object_or_404(
         models.Product, pk=request.GET.get('product_id')
@@ -196,7 +218,6 @@ def add_to_basket(request):
         basketline.quantity += 1
         basketline.save()
     return HttpResponseRedirect(reverse('product', args=(product.slug,)))
-
 
 
 # function-based view
@@ -220,6 +241,8 @@ def manage_basket(request):
     return render(request, 'basket.html', {'formset': formset})
 
 # url --> order/address_select/
+
+
 class AddressSelectionView(LoginRequiredMixin, FormView):
     template_name = 'address_select.html'
     form_class = forms.AddressSelectionForm
@@ -239,4 +262,3 @@ class AddressSelectionView(LoginRequiredMixin, FormView):
             form.cleaned_data['shipping_address']
         )
         return super().form_valid(form)
-

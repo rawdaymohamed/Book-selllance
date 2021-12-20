@@ -1,0 +1,70 @@
+.container {
+  margin-top: 12vh;
+  margin-bottom: 12vh;
+}
+.login-btn{}
+.signup-btn{}
+img.welcome-image {
+  margin: 10vh auto;
+  display: block;
+  width: 50vw;
+  max-width: 100%;
+}
+.about-image {
+  width: 100%;
+}
+.about-us-text {
+  margin-top: 8%;
+}
+.about-us-text > p {
+  font-size: 1.5rem;
+  line-height: 1.5;
+}
+.signup-form {
+  width: 50%;
+}
+.login-form{
+    width: 50%;
+}
+
+.footer {
+  padding: 3%;
+  background-color: black;
+  color: white;
+  text-align: center;
+}
+.footer > p {
+  margin: 0;
+}
+@media screen and (max-width: 600px) {
+  .container {
+    margin-top: 10vh;
+  }
+  .about-us-text > p {
+    font-size: 1.2rem;
+    line-height: 1.5;
+  }
+  .about-us-text {
+    margin: 3% auto;
+  }
+}
+@media screen and (max-width: 800px) {
+  .container {
+    margin-top: 8vh;
+    margin-bottom: 8vh;
+  }
+  .about-us-text > p {
+    font-size: 1.2rem;
+    line-height: 1.5;
+  }
+  .about-us-text {
+    margin: 3% auto;
+  }
+
+.login-btn{
+   
+    margin-bottom: 12px;
+
+}
+
+}

@@ -1,4 +1,26 @@
-{% extends 'base.html' %}
-{% block content %}
-<h2>About us page</h2>
+{% extends 'base.html' %} {% block content %} {% load static %}
+
+<div class="container">
+  <h2 class="about-header">About Book Sellance</h2>
+  <div class="row">
+    <div class="col-md-6">
+      <img
+        class="about-image"
+        src="{% static 'images/book_illustration.jpg' %}"
+      />
+    </div>
+    <div class="about-us-text col-md-6">
+      <p>
+        Book Sellance is an online book store for selling ebooks at affordable
+        prices. You're free to sell your own ebooks on our store.
+      </p>
+      <p>
+        For you to be able to buy or sell ebooks, please make sure to login to
+        the website. If you haven't already made an account, please make sure to
+        sign up and activate your account
+      </p>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

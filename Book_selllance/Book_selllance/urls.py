@@ -23,7 +23,8 @@ urlpatterns = [
 
     # TemplateView is a class-based view
     # path('', TemplateView.as_view(template_name='home.html')),
-    path('', include('main.urls'))
+    path('api-auth/', include('rest_framework.urls')),
+    path('', include('main.urls')),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

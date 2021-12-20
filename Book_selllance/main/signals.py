@@ -7,7 +7,7 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
-from .models import ProductImage, Basket
+from .models import ProductImage, Basket, Basket, OrderLine, Order
 
 THUMBNAIL_SIZE = (300, 300)
 
@@ -36,6 +36,7 @@ def generate_thumbnail(sender, instance, **kwargs):
     )
     temp_thumb.close()
 
+
 @receiver(user_logged_in)
 def merge_baskets_if_found(sender, user, request, **kwargs):
     anonymous_basket = getattr(request, 'basket', None)
@@ -56,3 +57,15 @@ def merge_baskets_if_found(sender, user, request, **kwargs):
             anonymous_basket.user = user
             anonymous_basket.save()
             logger.info('Assigned user to basket id %d', anonymous_basket.id,)
+
+
+@receiver(post_save, sender=OrderLine)
+def orderline_to_order_status(sender, instance, **kwargs):
+    if not instance.order.lines.filter(status__lt=OrderLine.SENT)\
+            .exists():
+        logger.info(
+            'All lines for order %d have been processes. Marking as done/',
+            instance.order.id,
+        )
+        instance.order.status = Order.DONE
+        instance.order.save()

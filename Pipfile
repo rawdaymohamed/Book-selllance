@@ -19,6 +19,8 @@ factory-boy = "*"
 django-debug-toolbar = "*"
 django-tables2 = "*"
 django-filter = "*"
+djangorestframework = "*"
+django-crispy-forms = "*"
 
 [dev-packages]
 
